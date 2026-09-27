@@ -4,23 +4,21 @@ local Class = require("../src/")
 local Types = require("../src/types")
 
 
-type Animal<T> = Types.Class<{
+type Animal = Types.Class<{
 
-    ___generics: Types.Generic<T>,
-
-    new: Types.Constructor<(name: string) -> Types.Object<T>>,
+    new: Types.Constructor<(name: string) -> Types.Object>,
 
     name: Types.Protected<string>,
 
     getName: () -> string,
 
-    getAnimals: Types.Static<() -> { Types.Object<T> }>
+    getAnimals: Types.Static<() -> { Types.Object }>
 
 }>
 
 local Animals = {}
 
-local AnimalImpl = Class.new<<Animal<unknown>>>():declare()
+local AnimalImpl = Class.new<<Animal>>():declare()
 
 function AnimalImpl.new(name)
     local animal =  AnimalImpl:object({ name = name })
@@ -41,5 +39,10 @@ local animal = AnimalImpl.new("foo")
 
 type Human = Types.Class<{
 
+    spew: number,
 
-}>
+}, Animal>
+
+local Human = Class.new<<Human>>():declare(Animal)
+
+local f = Human:export().new("test")

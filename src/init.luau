@@ -37,24 +37,24 @@ end
 type Export<T> = (any) -> ClassOf<T>
 type Object<T> = (any, ObjectValueOf<T>) -> ObjectOf<T>
 
-type Class<T> = {
-	__index: Class<T>,
+type Lib<T> = {
+	__index: Lib<T>,
 	declare: Inject<ParentsOf<T>, Add<ToImpl<T>, Object<T>, Export<T>>>,
 	export: Export<T>,
 	object: Object<T>,
 }
 
-local Class = {}
-Class.__index = Class
+local Lib = {}
+Lib.__index = Lib
 
-function Class.new<T>(): Class<T>
+function Lib.new<T>(): Lib<T>
 	local self = {}
 	self.__index = self
 
-	return setmetatable(self, Class) :: any
+	return setmetatable(self, Lib) :: any
 end
 
-function Class.declare<T>(self: Class<T>, ...): ToImpl<T>
+function Lib.declare<T>(self: Lib<T>, ...): ToImpl<T>
 	local class: any = self
 	for _, parent in { ... } do
 		for key, property in parent do
@@ -67,12 +67,12 @@ function Class.declare<T>(self: Class<T>, ...): ToImpl<T>
 	return class
 end
 
-function Class.export<T>(self: Class<T>): Types.ClassOf<T>
+function Lib.export<T>(self: Lib<T>): Types.ClassOf<T>
 	return self :: any
 end
 
-function Class.object<T>(self: Class<T>, value: ObjectValueOf<T>): ObjectOf<T>
+function Lib.object<T>(self: Lib<T>, value: ObjectValueOf<T>): ObjectOf<T>
 	return setmetatable(value, self) :: any
 end
 
-return Class
+return Lib
