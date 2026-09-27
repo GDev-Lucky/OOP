@@ -1,0 +1,13 @@
+# Roblox Studio
+*.rbxl
+*.rbxlx
+*.rbxm
+*.rbxmx
+
+# Generated tooling output
+sourcemap.json
+
+# Editors and operating systems
+.DS_Store
+Thumbs.db
+.vscode/
