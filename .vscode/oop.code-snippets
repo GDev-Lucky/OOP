@@ -1,0 +1,11 @@
+{
+    "OOP imports":  {
+                        "scope":  "luau",
+                        "prefix":  "oopimport",
+                        "body":  [
+                                     "local OOP = require(path.to.OOP)",
+                                     "local Class = OOP; type Self = OOP.Self; type Object = OOP.Object; type ClassType = OOP.ClassType; type Impl = OOP.Impl; type Class<T, A...> = OOP.Class<T, A...>; type Refine<Base, Spec, Parents...> = OOP.Refine<Base, Spec, Parents...>; type Interface<T> = OOP.Interface<T>; type Trait<T> = OOP.Trait<T>; type Override<T> = OOP.Override<T>; type View<T, K> = OOP.View<T, K>; type ViewOf<T, K> = OOP.ViewOf<T, K>; type ToClass<T> = OOP.ToClass<T>; type ToObject<T> = OOP.ToObject<T>; type ToSelf<T> = OOP.ToSelf<T>; type ToImpl<T> = OOP.ToImpl<T>; type ToSpec<T> = OOP.ToSpec<T>; type ToBase<T> = OOP.ToBase<T>; type ParentsOf<T, R, B = false> = OOP.ParentsOf<T, R, B>; type ClassOf<T> = OOP.ClassOf<T>; type ObjectOf<T> = OOP.ObjectOf<T>; type SelfOf<T> = OOP.SelfOf<T>; type ImplOf<T> = OOP.ImplOf<T>; type SpecOf<T> = OOP.SpecOf<T>; type BaseOf<T> = OOP.BaseOf<T>; type Public<T> = OOP.Public<T>; type Protected<T> = OOP.Protected<T>; type Private<T> = OOP.Private<T>; type Static<T> = OOP.Static<T>; type Method<T> = OOP.Method<T>; type Field<T> = OOP.Field<T>; type Const<T> = OOP.Const<T>; type Var<T> = OOP.Var<T>; type Mut<T> = OOP.Mut<T>; type Immut<T> = OOP.Immut<T>; type Constructor<T> = OOP.Constructor<T>; type ObjectValuesOf<T> = OOP.ObjectValuesOf<T>; type AssertObjectValuesOf<T, V> = OOP.AssertObjectValuesOf<T, V>"
+                                 ],
+                        "description":  "Require OOP and alias its runtime builder and all exported types"
+                    }
+}

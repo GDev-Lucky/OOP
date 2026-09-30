@@ -10,7 +10,8 @@ sourcemap.json
 # Editors and operating systems
 .DS_Store
 Thumbs.db
-.vscode/
+.vscode/*
+!.vscode/*.code-snippets
 
 # Temp files
 temp.md
