@@ -32,23 +32,29 @@ type Counter = Class<{
 ## Give it behavior
 
 ```luau
-local CounterImpl = Class.new<<Counter>>():declare()
+local Counter = Class.new<<Counter>>():declare()
 
-function CounterImpl.new(start)
-	return CounterImpl:object({ value = start })
+function Counter.new(start)
+	return Counter:object({ value = start })
 end
 
-function CounterImpl:add(amount)
+function Counter:add(amount)
 	self.value += amount
 	return self.value
 end
 
-local CounterClass = CounterImpl:export()
-local counter = CounterClass.new(0)
+return Counter:export()
+```
+
+In a different module, require the class to create an instance:
+
+```luau
+local Counter = require(path.to.Counter)
+local counter = Counter.new(0)
 print(counter:add(2)) -- 2
 ```
 
-`Class.new<<Counter>>()` creates a builder. `:declare()` gives you its typed implementation table; `:object({...})` attaches that class as the instance metatable, so `:add` can be found through `__index`. `:export()` returns the public class view. The builder does **not** execute `new` for you: you define and call it yourself.
+`Class.new<<Counter>>()` creates a builder. `:declare()` gives you its typed implementation table; `:object({...})` attaches that class as the instance metatable, so `:add` can be found through `__index`. `return Counter:export()` exposes the public class view to callers without needing another local name. The builder does **not** execute `new` for you: you define and call it yourself.
 
 ## What next?
 

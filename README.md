@@ -14,19 +14,25 @@ type Counter = Class<{
 	add: (number) -> number,
 }>
 
-local CounterImpl = Class.new<<Counter>>():declare()
+local Counter = Class.new<<Counter>>():declare()
 
-function CounterImpl.new(start)
-	return CounterImpl:object({ value = start })
+function Counter.new(start)
+	return Counter:object({ value = start })
 end
 
-function CounterImpl:add(amount)
+function Counter:add(amount)
 	self.value += amount
 	return self.value
 end
 
-local CounterClass = CounterImpl:export()
-local counter = CounterClass.new(0)
+return Counter:export()
+```
+
+From another module, use the exported class:
+
+```luau
+local Counter = require(path.to.Counter)
+local counter = Counter.new(0)
 print(counter:add(2)) -- 2
 ```
 

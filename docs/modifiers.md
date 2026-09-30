@@ -79,12 +79,18 @@ type Badge = Class<{
 	new: Constructor<(string) -> ()>,
 }>
 
-local BadgeImpl = Class.new<<Badge>>():declare()
-function BadgeImpl.new(name)
-	return BadgeImpl:object({ name = name })
+local Badge = Class.new<<Badge>>():declare()
+function Badge.new(name)
+	return Badge:object({ name = name })
 end
-local BadgeClass = BadgeImpl:export()
-local badge = BadgeClass.new("Explorer")
+return Badge:export()
+```
+
+Callers can then create a badge:
+
+```luau
+local Badge = require(path.to.Badge)
+local badge = Badge.new("Explorer")
 ```
 
 ## Nesting rules

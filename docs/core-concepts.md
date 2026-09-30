@@ -15,11 +15,13 @@ type Lamp = Class<{
 	toggle: () -> boolean,
 }>
 
-local LampImpl = Class.new<<Lamp>>():declare()
-function LampImpl:toggle()
+local Lamp = Class.new<<Lamp>>():declare()
+function Lamp:toggle()
 	self.isOn = not self.isOn
 	return self.isOn
 end
+
+return Lamp:export()
 ```
 
 | View | Who uses it | What it exposes |

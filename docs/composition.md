@@ -19,19 +19,24 @@ type Player = Class<{
 	getName: () -> string,
 }, Entity, Named>
 
-local EntityImpl = Class.new<<Entity>>():declare()
-local EntityClass = EntityImpl:export()
-local PlayerImpl = Class.new<<Player>>():declare(EntityClass)
+local Entity = Class.new<<Entity>>():declare()
+local Player = Class.new<<Player>>():declare(Entity:export())
 
-function PlayerImpl.new(id, name)
-	return PlayerImpl:object({ id = id, name = name })
+function Player.new(id, name)
+	return Player:object({ id = id, name = name })
 end
-function PlayerImpl:getName()
+function Player:getName()
 	return self.name
 end
 
-local PlayerClass = PlayerImpl:export()
-local player = PlayerClass.new("1", "Ada")
+return Player:export()
+```
+
+In a caller module:
+
+```luau
+local Player = require(path.to.Player)
+local player = Player.new("1", "Ada")
 ```
 
 `Named` is a type-only contract: there is no runtime interface argument to pass to `:declare()`. For runtime reuse, pass actual parent class/trait tables in the same parent order as the spec. `declare` copies non-`__index` keys, processing later parents first so the first parent wins; define local overrides *after* calling `:declare()`. It is **not** a dynamic superclass link: changes to a parent after declaration are not automatically inherited.
