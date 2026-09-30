@@ -1,41 +1,59 @@
-# Composition
+﻿# 4. Composition
 
-## Sources
+Once a class stands on its own, it can reuse another class's members or promise to satisfy an interface. The type compiler merges the specs; the runtime builder copies members from runtime parents passed to `:declare()`.
 
-The remaining arguments to `Class<T, A...>` are composition sources:
+## Parents
 
-```luau
-type Player = OOP.Class<
-	{ name: OOP.Var<string> },
-	Entity,
-	Serializable,
-	Movable
->
-```
-
-A class can include one superclass, plus any number of interfaces and traits. Composition sources must be previously compiled `Class`, `Interface`, or `Trait` types.
-
-## Inheritance rules
-
-- Public and protected inherited members participate in composition.
-- Private members are not inherited into another class's metadata.
-- Inherited metadata is merged before the local spec.
-- Local members therefore define the resulting member type when there is no unresolved parent collision.
-- `Self`, `Object`, `ClassType`, and `Impl` references resolve against the final composed class.
-
-## Collisions require `Override`
-
-If two composed sources define the same non-private member, the class has an unresolved collision. Defining the same member locally does not clear that invalid parent composition.
+`Class<Spec, Parents...>` accepts at most one superclass and any number of interfaces and traits. Public and protected members compose; private members do not become inherited metadata. A local member can replace an inherited member unless the parents conflict with one another.
 
 ```luau
-type First = OOP.Interface<{ id: string }>
-type Second = OOP.Interface<{ id: number }>
+local OOP = require(path.to.OOP)
+local Class = OOP
+type Class<T, A...> = OOP.Class<T, A...>; type Interface<T> = OOP.Interface<T>; type Constructor<T> = OOP.Constructor<T>
 
-type Result = OOP.Override<OOP.Class<{}, First, Second>>
+type Named = Interface<{ getName: () -> string }>
+type Entity = Class<{ id: string }>
+type Player = Class<{
+	name: string,
+	new: Constructor<(string, string) -> ()>,
+	getName: () -> string,
+}, Entity, Named>
+
+local EntityImpl = Class.new<<Entity>>():declare()
+local EntityClass = EntityImpl:export()
+local PlayerImpl = Class.new<<Player>>():declare(EntityClass)
+
+function PlayerImpl.new(id, name)
+	return PlayerImpl:object({ id = id, name = name })
+end
+function PlayerImpl:getName()
+	return self.name
+end
+
+local PlayerClass = PlayerImpl:export()
+local player = PlayerClass.new("1", "Ada")
 ```
 
-`Override<T>` explicitly accepts the collision. Source order chooses the inherited definition: the first source has priority. `Override` applies only to `Class<...>`, not standalone interfaces or traits.
+`Named` is a type-only contract: there is no runtime interface argument to pass to `:declare()`. For runtime reuse, pass actual parent class/trait tables in the same parent order as the spec. `declare` copies non-`__index` keys, processing later parents first so the first parent wins; define local overrides *after* calling `:declare()`. It is **not** a dynamic superclass link: changes to a parent after declaration are not automatically inherited.
 
-## Interface versus trait
+## Traits
 
-Interfaces are reusable contracts. Traits are reusable member composition that also has compiled `Self`, `Class`, and `Impl` views. Both participate in the same merging and collision rules when included in a class.
+`Trait<Spec>` defines reusable members with compiled privileged views; unlike an interface, a trait can contribute runtime behavior when you supply its implementation to `:declare()`. Neither a trait nor an interface creates objects on its own. See [views](core-concepts.md#one-spec-several-views) for the type-side distinction.
+
+## Collisions
+
+Two parents with the same non-private member cause a type-level collision, even if the child declares that member locally. Explicitly acknowledge it with `Override<...>`; the first source has priority for inherited definitions.
+
+```luau
+local OOP = require(path.to.OOP)
+local Class = OOP
+type Class<T, A...> = OOP.Class<T, A...>; type Interface<T> = OOP.Interface<T>; type Override<T> = OOP.Override<T>
+
+type First = Interface<{ id: string }>
+type Second = Interface<{ id: number }>
+type Chosen = Override<Class<{}, First, Second>>
+```
+
+Use `Override` only on a class, not an interface or standalone trait. The runtime copies parent values according to `:declare()`'s order; interfaces contribute no runtime values. This is an explicit choice, not an automatic conflict solver.
+
+Want a different type view of the *same* runtime class? Continue to [refinement](refinement.md).

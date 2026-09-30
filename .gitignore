@@ -11,3 +11,7 @@ sourcemap.json
 .DS_Store
 Thumbs.db
 .vscode/
+
+# Temp files
+temp.md
+tests/temp.luau

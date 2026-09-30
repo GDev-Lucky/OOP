@@ -1,3 +1,4 @@
 # Latest Decisions
 
-No durable repository decisions have been recorded. Add routes here only after a dated decision is confirmed.
+- [Type-only class refinement](2026-09-29-type-only-refinement.md)
+- [Bare object reference in refinements](2026-09-29-001-bare-object-refinement.md)

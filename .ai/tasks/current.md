@@ -1,5 +1,4 @@
-# Current Task
+﻿# Current Task
 
 - Status: completed
-
-- [Add GitHub Documentation](2026-09-27-002-add-github-documentation.md)
+- [Rewrite documentation and unify exports](2026-09-30-004-rewrite-documentation-and-unify-exports.md)

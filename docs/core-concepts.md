@@ -1,44 +1,56 @@
-# Core concepts
+﻿# 2. Core concepts
 
-## A spec compiles into views
+A spec is not an object factory. It is a map of members that Luau compiles into several useful views. The small runtime builder then lets you implement that map.
 
-`Class<T, A...>` accepts a member spec and optional composition sources. Rather than exposing one broad table type, OOP creates context-specific views:
-
-| View | Purpose |
-| --- | --- |
-| `ObjectOf<T>` | Public instance API |
-| `SelfOf<T>` | Privileged instance API for methods |
-| `ClassOf<T>` | Public static API and constructors |
-| `ImplOf<T>` | Privileged implementation/runtime API |
-| `SpecOf<T>` | Original local class specification |
-
-`ObjectOf<T>` is intentionally narrow: it excludes protected, private, and static members. `ImplOf<T>` is deliberately broader and writable so implementation code can define methods and static values.
-
-## Late-bound references
-
-Use symbolic references in a spec when a member should refer to the final compiled class:
+## One spec, several views
 
 ```luau
+local OOP = require(path.to.OOP)
+local Class = OOP
+type Class<T, A...> = OOP.Class<T, A...>; type Private<T> = OOP.Private<T>; type Var<T> = OOP.Var<T>
+
+type Lamp = Class<{
+	isOn: Var<boolean>,
+	secretCode: Private<string>,
+	toggle: () -> boolean,
+}>
+
+local LampImpl = Class.new<<Lamp>>():declare()
+function LampImpl:toggle()
+	self.isOn = not self.isOn
+	return self.isOn
+end
+```
+
+| View | Who uses it | What it exposes |
+| --- | --- | --- |
+| `ObjectOf<T>` | Callers | Public instance members |
+| `SelfOf<T>` | Method bodies | Public, protected, and private instance members |
+| `ClassOf<T>` | Callers of the class table | Public statics and constructors |
+| `ImplOf<T>` | Implementation | Writable method and static definitions, plus builder methods |
+| `SpecOf<T>` | Type-level inspection | The original local specification |
+
+`Class<...>` itself has the public object as its primary type view; the named extractors help when you want to be explicit. Access restrictions here are **type-system** views, not runtime security. Luau does not hide table keys at runtime.
+
+## References to this class
+
+When a spec needs to talk about itself, use a reference rather than naming the class recursively:
+
+```luau
+local OOP = require(path.to.OOP)
+local Class = OOP
+type Class<T, A...> = OOP.Class<T, A...>; type Object = OOP.Object; type Var<T> = OOP.Var<T>
+
 type Node = Class<{
-	parent: OOP.Var<OOP.Object?>,
-	clone: () -> OOP.Object,
-	getSelf: () -> OOP.Self,
+	parent: Var<Object?>,
+	clone: () -> Object,
 }>
 ```
 
-The available references are `Self`, `Object`, `ClassType`, and `Impl`. OOP resolves them after it builds the final class views. This means an interface, trait, or superclass can describe `Object` without becoming tied to the original source type when composed into a derived class.
+`Object` resolves to the public instance view. `Self`, `ClassType`, and `Impl` similarly refer to the privileged instance, public class table, and implementation views. Composition can rebind these references to a derived class; [refinement](refinement.md#references-inside-overrides) has an important exception for inherited references.
 
-## Recovering a view
+## Recover another view
 
-Use `ToObject<T>`, `ToSelf<T>`, `ToClass<T>`, `ToImpl<T>`, or `ToSpec<T>` to convert a known compiled view. The equivalent `*Of` types extract a view from a compiled class bundle.
+`ObjectOf<T>` extracts a view from a compiled class; `ToObject<T>` converts a known compiled view to that view. For example, `ToClass<ObjectOf<Node>>` gets the public class table type back. Keep the compiler's hidden metadata opaque; use the exported helpers instead.
 
-```luau
-type PublicNode = OOP.ObjectOf<Node>
-type ClassAgain = OOP.ToClass<PublicNode>
-```
-
-The compiler carries hidden metadata with generated views to preserve this identity through conversions. That representation is an implementation detail; depend on the exported conversion types instead.
-
-## Interfaces and traits
-
-`Interface<T>` defines a reusable contract. `Trait<T>` defines reusable member composition with its own compiled privileged views. Both can be composed into a class. See [composition](composition.md).
+Next: [modifiers](modifiers.md) give each member its own rules. For a complete list of view helpers, see the [API reference](api-reference.md#views-and-conversions).

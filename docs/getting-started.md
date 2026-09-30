@@ -1,49 +1,55 @@
-# Getting started
+﻿# 1. Getting started
 
-## Current status
+A class has two sides: a **type spec** that tells Luau what exists, and a **runtime table** that gives those members behavior. Let's build a little counter.
 
-The implemented part of OOP is the compiler in `src/types.luau`. It exports types that Luau resolves at compile time. A runtime builder and usable package entry point are not implemented yet, so import `types.luau` directly while experimenting.
+## One import
+
+Require `src/init.luau` using the path syntax of your project. It exposes the runtime builder and every public type from `src/types.luau`.
+
+Our examples keep imports together in three lines: module, runtime aliases, and type aliases. Add only the aliases that example needs. `Class` can name both a local value and a local type in Luau.
 
 ```luau
-local OOP = require("path.to.types")
-
-type Class<T, A...> = OOP.Class<T, A...>
-type ObjectOf<T> = OOP.ObjectOf<T>
-type ImplOf<T> = OOP.ImplOf<T>
-type Var<T> = OOP.Var<T>
+--!strict
+local OOP = require(path.to.OOP)
+local Class = OOP
+type Class<T, A...> = OOP.Class<T, A...>; type Var<T> = OOP.Var<T>; type Constructor<T> = OOP.Constructor<T>
 ```
 
-## Define a class
+`Class.new` is a runtime method on `OOP`. The `Class<...>` alias is a compile-time type. There is no runtime `OOP.Class` value.
 
-The first `Class` argument is a local member specification. Function members are methods by default; they receive an injected `self` parameter in compiled views. Properties are const by default.
+## Describe the class
 
 ```luau
-type Score = Class<{
+type Counter = Class<{
 	value: Var<number>,
+	new: Constructor<(number) -> ()>,
 	add: (number) -> number,
 }>
-
-type ScoreObject = ObjectOf<Score>
-type ScoreImpl = ImplOf<Score>
 ```
 
-`ScoreObject` is the public instance surface. `ScoreImpl` is the privileged surface used by the future runtime and method implementations.
+`value` is writable because of `Var`. A function is a method by default, so `add` receives typed `self` automatically. `Constructor` declares a static function whose public return type is the object, regardless of the `()` written in its spec.
+
+## Give it behavior
 
 ```luau
-local impl: ScoreImpl = nil :: any
+local CounterImpl = Class.new<<Counter>>():declare()
 
-function impl:add(amount)
+function CounterImpl.new(start)
+	return CounterImpl:object({ value = start })
+end
+
+function CounterImpl:add(amount)
 	self.value += amount
 	return self.value
 end
+
+local CounterClass = CounterImpl:export()
+local counter = CounterClass.new(0)
+print(counter:add(2)) -- 2
 ```
 
-## Use the right view
+`Class.new<<Counter>>()` creates a builder. `:declare()` gives you its typed implementation table; `:object({...})` attaches that class as the instance metatable, so `:add` can be found through `__index`. `:export()` returns the public class view. The builder does **not** execute `new` for you: you define and call it yourself.
 
-- `ObjectOf<T>` is for callers of public instance APIs.
-- `SelfOf<T>` is for methods that need public, protected, and private instance members.
-- `ClassOf<T>` is for public static members and constructors.
-- `ImplOf<T>` is for implementation code.
-- `SpecOf<T>` recovers the original local specification.
+## What next?
 
-Read [core concepts](core-concepts.md) for the view model, then [modifiers](modifiers.md) and [composition](composition.md) for the rest of the language.
+[Core concepts](core-concepts.md) explains what each view sees. [Modifiers](modifiers.md) shows how to describe public, private, static, and immutable members; [composition](composition.md) shows how to share them. If you need a name quickly, use the [API reference](api-reference.md).

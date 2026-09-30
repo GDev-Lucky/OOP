@@ -1,68 +1,94 @@
-# Modifiers
+﻿# 3. Modifiers
 
-Modifiers wrap a member type in a class, interface, or trait spec. They control independent aspects of that member.
+A plain property is public and const; a plain function is a method. Modifiers change only the parts you name, keeping the spec pleasantly small.
 
 ## Visibility
 
 ```luau
-OOP.Public<T>    -- default
-OOP.Protected<T>
-OOP.Private<T>
+local OOP = require(path.to.OOP)
+local Class = OOP
+type Class<T, A...> = OOP.Class<T, A...>; type Public<T> = OOP.Public<T>; type Protected<T> = OOP.Protected<T>; type Private<T> = OOP.Private<T>
+
+type Door = Class<{
+	label: Public<string>, -- Public is optional here
+	unlock: Protected<(string) -> boolean>,
+	pin: Private<string>,
+}>
 ```
 
-Public instance members appear in `ObjectOf<T>`. Protected and private instance members are available through `SelfOf<T>`. Public static members appear in `ClassOf<T>`.
+Callers see `label`, not `unlock` or `pin`. Method `self` can see all three. Visibility is enforced by the type views, not by runtime table access.
+
+## Properties and assignment
+
+A const member cannot be reassigned through the public view. `Var<T>` allows replacement; `Mut<T>` and `Immut<T>` govern *inside* a table, independently of that outer assignment rule.
+
+```luau
+local OOP = require(path.to.OOP)
+local Class = OOP
+type Class<T, A...> = OOP.Class<T, A...>; type Var<T> = OOP.Var<T>; type Immut<T> = OOP.Immut<T>
+
+type Settings = Class<{
+	name: Var<string>,
+	options: Immut<{ sound: { enabled: boolean } }>,
+}>
+```
+
+`Const<T>` and `Mut<T>` spell out the defaults when you need them. `Immut<T>` recursively removes writes through ordinary nested table properties, including indexed read values. [Indexer writes have a caveat](limitations.md#immutable-indexers).
+
+## Methods or stored functions?
+
+Function members are methods by default: the compiler injects `self`, and callers write `object:run()`. `Field<F>` keeps an ordinary function value, called as `object.callback()` without an injected instance argument. `Method<F>` states the default explicitly.
+
+```luau
+local OOP = require(path.to.OOP)
+local Class = OOP
+type Class<T, A...> = OOP.Class<T, A...>; type Field<T> = OOP.Field<T>
+
+type Worker = Class<{
+	run: (number) -> boolean,
+	callback: Field<(number) -> boolean>,
+}>
+```
 
 ## Static members
 
-`Static<T>` moves a member from the instance surface to the class surface.
+`Static<T>` puts a member on the class table instead of an instance. Static functions are ordinary functions by default: no instance `self` is injected.
 
 ```luau
-version: OOP.Static<string>,
-format: OOP.Static<(number) -> string>,
+local OOP = require(path.to.OOP)
+local Class = OOP
+type Class<T, A...> = OOP.Class<T, A...>; type Static<T> = OOP.Static<T>
+
+type Clock = Class<{
+	version: Static<string>,
+	format: Static<(number) -> string>,
+}>
 ```
-
-Static function members are ordinary function values by default; no instance `self` is injected.
-
-## Methods and function fields
-
-Functions are methods by default. OOP injects `self` so callers use colon syntax.
-
-```luau
-run: (number) -> boolean,
-callback: OOP.Field<(number) -> boolean>,
-```
-
-`run` is called as `object:run(1)`. `callback` is a stored function called as `object.callback(1)`. Use `Method<T>` to state the default explicitly.
-
-## Assignment and mutability
-
-`Const<T>` is the default: the member cannot be reassigned. `Var<T>` makes the member assignable.
-
-```luau
-name: OOP.Var<string>,
-settings: OOP.Var<OOP.Immut<{ enabled: boolean }>>,
-```
-
-`Mut<T>` preserves normal table mutability. `Immut<T>` recursively removes writes from normal properties, nested tables, metatables, union/intersection components, and indexer read values. It is separate from `Const`/`Var`: the latter decides whether the property itself may be replaced.
 
 ## Constructors
 
-`Constructor<T>` accepts a function type, makes the member static, and replaces its declared return with the final public object type.
+`Constructor<F>` marks a function static and gives its public class view the public object return type. The written return in the spec is replaced; `()` makes the intent clear. You still have to implement and call the runtime function yourself.
 
 ```luau
-new: OOP.Constructor<(string, number) -> ()>,
+local OOP = require(path.to.OOP)
+local Class = OOP
+type Class<T, A...> = OOP.Class<T, A...>; type Constructor<T> = OOP.Constructor<T>
+
+type Badge = Class<{
+	name: string,
+	new: Constructor<(string) -> ()>,
+}>
+
+local BadgeImpl = Class.new<<Badge>>():declare()
+function BadgeImpl.new(name)
+	return BadgeImpl:object({ name = name })
+end
+local BadgeClass = BadgeImpl:export()
+local badge = BadgeClass.new("Explorer")
 ```
 
-The public class view exposes `new(string, number) -> ObjectOf<...>`.
+## Nesting rules
 
-## Precedence
+Nested modifiers apply inside out: the **outer** modifier wins when both address the same concern. Thus `Public<Private<string>>` is public, and `Field<Method<(number) -> number>>` is a field. Prefer one modifier per concern whenever possible.
 
-Nested modifiers are applied from the inside outward. The outer modifier wins when two modifiers control the same concern.
-
-```luau
-OOP.Public<OOP.Private<T>> -- public
-OOP.Field<OOP.Method<F>>   -- field
-OOP.Mut<OOP.Immut<Table>>  -- mutable
-```
-
-Use this deliberately; it makes composed modifier aliases predictable.
+Next: [composition](composition.md), or jump to the [modifier index](api-reference.md#modifiers).
